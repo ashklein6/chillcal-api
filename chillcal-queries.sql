@@ -156,11 +156,8 @@ VALUES (1, 8, false);
 -- Accept connection request (in this case for connection_id=12)
 UPDATE connections SET accepted = true WHERE id=12;
 
--- Delete connection (unfriend) (in this case for connection_id=12)
+-- Delete connection (whether or not request has been acccepted) (in this case for connection_id=12)
 DELETE FROM connections WHERE id=12;
-
--- Delete connection request (in this case for requester Ashley/id=1 and requested id=13)
-DELETE FROM connections WHERE (from_user_id=1) AND (to_user_id=13);
 
 -- Get a user's scheduled chills with a specific connection (in this case for connection_id=2)
 SELECT * FROM chills_users
