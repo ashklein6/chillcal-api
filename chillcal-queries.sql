@@ -132,6 +132,12 @@ JOIN chills ON chills.id = chills_users.chill_id
 WHERE (created_user_id=1) AND (requested_user_id IS NULL)
 ORDER BY chills.start_time;
 
+-- Get chills scheduled with a specific friend (in this case for 'Ashley'/id=1 and 'Lauren'/id=2)
+SELECT * FROM chills_users
+JOIN chills ON chills.id = chills_users.chill_id
+WHERE connection_id=1
+ORDER BY chills.start_time;
+
 -- Get a user's available chills (in this case for 'Ashley'/id=1)
 SELECT * FROM (
     SELECT connections.id as connection_id, to_user.username, to_user.id FROM connections 
@@ -158,11 +164,6 @@ UPDATE connections SET accepted = true WHERE id=12;
 
 -- Delete connection (whether or not request has been acccepted) (in this case for connection_id=12)
 DELETE FROM connections WHERE id=12;
-
--- Get a user's scheduled chills with a specific connection (in this case for connection_id=2)
-SELECT * FROM chills_users
-JOIN chills ON chills_users.chill_id=chills.id
-WHERE connection_id=2;
 
 -- Delete account (in this case for id=13)
 DELETE FROM person WHERE id=13;
@@ -191,7 +192,7 @@ DELETE FROM chills WHERE id=6;
 INSERT into requests (chills_users_id, requester_id)
 VALUES (6, 1);
 
--- Get a user's chill requests (in this case for lauren/id=1)
+-- Get a user's chill requests (in this case for Ashley/id=1)
 SELECT requests.id AS request_id, chills_users_id, requester_id, created_user_id, requested_user_id, chill_id, connection_id, start_time, end_time, details FROM requests
 JOIN chills_users ON chills_users.id = requests.chills_users_id
 JOIN chills ON chills.id = chills_users.chill_id
@@ -210,7 +211,7 @@ DELETE FROM requests WHERE id=2;
 -- Cancel a chill (that wasn't created by the user) (in this case for chill with id=6)
 UPDATE chills_users SET requested_user_id=NULL, connection_id=NULL WHERE id=6;
 
--- Get a user's 5 next scheduled chills (in this case from 'Ashley'/id=1)
+-- Get a user's 3 next scheduled chills (in this case from 'Ashley'/id=1)
 SELECT connections.username AS friend_username, connections.id AS friend_id, chills_users.id AS chills_users_id, created_user_id, requested_user_id, chill_id, chills_users.connection_id, start_time, end_time, details FROM (
     SELECT connections.id as connection_id, to_user.username, to_user.id FROM connections 
     LEFT JOIN person AS from_user ON from_user.id=from_user_id
@@ -226,4 +227,4 @@ JOIN chills_users ON chills_users.connection_id=connections.connection_id
 JOIN chills ON chills_users.chill_id=chills.id
 WHERE chills_users.requested_user_id IS NOT NULL
 ORDER BY start_time ASC
-LIMIT 1;
+LIMIT 3;
