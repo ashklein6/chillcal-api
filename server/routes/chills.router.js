@@ -147,7 +147,7 @@ router.get('/upcoming/:id', rejectUnauthenticated, (req, res) => {
 });
 
 // to create a new chill
-router.post('/', rejectUnauthenticated, (req, res) => {
+router.post('/', rejectUnauthenticated, async (req, res) => {
     console.log(`in chills.router.js POST for '/chills' req.body:`,req.body);
     let newChill = req.body.newChill;
     let id = req.body.id;
@@ -230,7 +230,7 @@ router.post('/request', rejectUnauthenticated, (req, res) => {
 });
 
 // to accept a chill request
-router.put('/request/accept', rejectUnauthenticated, (req, res) => {
+router.put('/request/accept', rejectUnauthenticated, async (req, res) => {
     console.log(`in chills.router.js PUT for '/chills/request/accept' req.body:`,req.body);
     let userId = req.body.userId;
     let friendId = req.body.friendId;

@@ -9,25 +9,25 @@ router.get('/list/:id', rejectUnauthenticated, (req, res) => {
     let id=req.params.id;
     pool.query(`
     SELECT * FROM (
-        SELECT * FROM (
-            SELECT connections.id as connection_id, to_user.username, to_user.id FROM connections 
-            LEFT JOIN person AS from_user ON from_user.id=from_user_id
-            LEFT JOIN person AS to_user ON to_user.id=to_user_id
-            WHERE (from_user.id=$1) AND (accepted = true)
-            UNION ALL
-            SELECT connections.id as connection_id, from_user.username, from_user.id FROM connections 
-            LEFT JOIN person AS from_user ON from_user.id=from_user_id
-            LEFT JOIN person AS to_user ON to_user.id=to_user_id
-            WHERE (to_user_id=$1) AND (accepted = true)
-        ) AS friends ORDER BY username ASC;
+        SELECT connections.id AS connection_id, to_user.username, to_user.id FROM connections
+        LEFT JOIN person AS from_user ON from_user.id=from_user_id
+        LEFT JOIN person AS to_user ON to_user.id=to_user_id
+        WHERE (from_user.id=$1) AND (accepted = true)
+        UNION ALL
+        SELECT connections.id AS connection_id, from_user.username, from_user.id FROM connections
+        LEFT JOIN person AS from_user ON from_user.id=from_user_id
+        LEFT JOIN person AS to_user ON to_user.id=to_user_id
+        WHERE (to_user_id=$1) AND (accepted = true)
+    ) AS friends ORDER BY username ASC;
     `,[id])
         .then((result) => {
             res.send(result.rows);
         }).catch((error) => {
             console.log('Error GET /friend', error);
-            res.sendStatus(500);  
+            res.sendStatus(500); 
     });
 });
+ 
 
 // to get user's pending connections (people that have requested to be friends with them)
 router.get('/pending/:id', rejectUnauthenticated, (req, res) => {
@@ -35,12 +35,12 @@ router.get('/pending/:id', rejectUnauthenticated, (req, res) => {
     let id=req.params.id;
     pool.query(`
     SELECT * FROM (
-        SELECT connections.id AS connection_id, from_user.username, from_user.id FROM connections 
-        LEFT JOIN person AS from_user ON from_user.id=from_user_id
+        SELECT connections.id AS connection_id, from_user.username, from_user.id FROM connections
+        LEFT JOIN person AS from_user ON from_user.id=from_user_id
         LEFT JOIN person AS to_user ON to_user.id=to_user_id
         WHERE (to_user.id=$1) AND (accepted = false)
     ) AS pending_friends ORDER BY username ASC;
-    `,[id])
+    `,[id]) 
         .then((result) => {
             res.send(result.rows);
         }).catch((error) => {
