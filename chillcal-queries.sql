@@ -165,11 +165,19 @@ UPDATE connections SET accepted = true WHERE id=12;
 -- Delete connection (whether or not request has been acccepted) (in this case for connection_id=12)
 DELETE FROM connections WHERE id=12;
 
--- Delete account (in this case for id=13)
-DELETE FROM person WHERE id=13;
+------ NOT CURRENTLY ABLE TO DELETE ACCOUNTS: ------
+--                                                --
+-- -- Delete account (in this case for id=13)     --
+-- DELETE FROM person WHERE id=13;                --
+--                                                --
+----------------------------------------------------
 
--- Update account info (in this case for id=13)
-UPDATE person SET username='newest username', password='newest password' WHERE id=13;
+------ NOT CURRENTLY ABLE TO UPDATE ACCOUNTS: ------
+--                                                --
+-- Update account info (in this case for id=13)   --
+-- UPDATE person SET username='newest username', password='newest password' WHERE id=13;
+--                                                --
+----------------------------------------------------
 
 -- Add a new chill (in this case for Ashley/id=1 (and added chill_id was 5) )
 BEGIN;

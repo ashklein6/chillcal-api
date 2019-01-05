@@ -66,18 +66,19 @@ router.get('/search', rejectUnauthenticated, (req, res) => {
     });
 });
 
-// to send a friend request
+// to send a friend request/add a new connection
 router.post('/', rejectUnauthenticated, (req, res) => {
-    console.log(`in friends.router.js POST for '/friends' req.query:`,req.query);
-    let friendId = req.query.friend;
-    let userId = req.query.user;
+    console.log(`in friends.router.js POST for '/friends' req.body:`,req.body);
+    let friendId = req.body.friend;
+    let userId = req.body.user;
     console.log('userId:', userId, 'friendId:', friendId);
     pool.query(`
     INSERT into connections (from_user_id, to_user_id, accepted)
     VALUES ($1, $2, false);    
     `, [userId, friendId])
         .then((result) => {
-            res.send(result.rows);
+            console.log(result);
+            res.sendStatus(201);
         }).catch((error) => {
             console.log('Error POST /friend', error);
             res.sendStatus(500);  
@@ -92,7 +93,8 @@ router.put('/accept/:id', rejectUnauthenticated, (req, res) => {
     UPDATE connections SET accepted = true WHERE id=$1;
     `,[connectionId])
         .then((result) => {
-            res.send(result.rows);
+            console.log(result);
+            res.sendStatus(200);
         }).catch((error) => {
             console.log('Error PUT /friend/accept', error);
             res.sendStatus(500);  
@@ -107,7 +109,8 @@ router.delete('/:id', rejectUnauthenticated, (req, res) => {
     DELETE FROM connections WHERE id=$1;
     `, [connectionId])
         .then((result) => {
-            res.send(result.rows);
+            console.log(result);
+            res.sendStatus(200);
         }).catch((error) => {
             console.log('Error DELETE /friend', error);
             res.sendStatus(500);  

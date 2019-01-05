@@ -146,11 +146,150 @@ router.get('/upcoming/:id', rejectUnauthenticated, (req, res) => {
     });
 });
 
-/**
- * POST route template
- */
+// to create a new chill
 router.post('/', rejectUnauthenticated, (req, res) => {
+    console.log(`in chills.router.js POST for '/chills' req.body:`,req.body);
+    let newChill = req.body.newChill;
+    let id = req.body.id;
+    console.log('newChill:', newChill, 'id:', id);
 
+    const client = await pool.connect();
+
+    try {
+        await client.query(`BEGIN;`);
+        let chillId = await client.query(`INSERT into chills (start_time, end_time, details)
+        VALUES ($1, $2, $3)
+        RETURNING id;`,[newChill.start_time, newChill.end_time, newChill.details]);
+        await client.query(`INSERT into chills_users (created_user_id, chill_id)
+        VALUES ($1, $2);`,[id, chillId]);
+        await client.query(`COMMIT;`);
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.log('Error POST /chills', error);
+        return res.status(500).send(error);
+    } finally {
+        client.release();
+        return res.sendStatus(201)
+    }
+});
+
+// to update a chill's times/details
+router.put('/edit', rejectUnauthenticated, (req, res) => {
+    console.log(`in chills.router.js PUT for '/chills/edit' req.body:`,req.body);
+    let newChill = req.body.newChill;
+    let chillId = req.body.id;
+    console.log('newChill:', newChill, 'chillId:', chillId);
+
+    pool.query(`
+    UPDATE chills 
+    SET start_time=$1, end_time=$2, details=$3
+    WHERE id=$4;
+    `,[newChill.startTime, newChill.endTime, newChill.details, chillId])
+        .then((result) => {
+            console.log(result);
+            res.sendStatus(200);
+        }).catch((error) => {
+            console.log('Error PUT /chills/edit', error);
+            res.sendStatus(500);  
+    });
+});
+
+// to delete a chill
+router.delete('/:id', rejectUnauthenticated, (req, res) => {
+    console.log(`in chills.router.js DELETE for '/chills' req.params:`,req.params);
+    let chillId=req.params.id;
+    pool.query(`
+    DELETE FROM chills WHERE id=$1;
+    `, [chillId])
+        .then((result) => {
+            console.log(result);
+            res.sendStatus(200);
+        }).catch((error) => {
+            console.log('Error DELETE /chills', error);
+            res.sendStatus(500);  
+    });
+});
+
+// to request to chill
+router.post('/request', rejectUnauthenticated, (req, res) => {
+    console.log(`in chills.router.js POST for '/chills/request' req.body:`,req.body);
+    let chillsUsersId = req.body.chillsUsersId;
+    let userId = req.body.user;
+    console.log('chillsUsersId:', chillsUsersId, 'userId:', userId);
+    pool.query(`
+    INSERT into requests (chills_users_id, requester_id)
+    VALUES ($1, $2);
+    `, [chillsUsersId, userId])
+        .then((result) => {
+            console.log(result);
+            res.sendStatus(201);
+        }).catch((error) => {
+            console.log('Error POST /chills/request', error);
+            res.sendStatus(500);  
+    });
+});
+
+// to accept a chill request
+router.put('/request/accept', rejectUnauthenticated, (req, res) => {
+    console.log(`in chills.router.js PUT for '/chills/request/accept' req.body:`,req.body);
+    let userId = req.body.userId;
+    let friendId = req.body.friendId;
+    let chillId = req.body.chillId;
+    let requestId = req.body.requestId;
+    console.log('userId:', userId, 'friendId:', friendId, 'chillId:', chillId, 'requestId:', requestId);
+
+    const client = await pool.connect();
+
+    try {
+        await client.query(`BEGIN;`);
+        let connectionId = await client.query(`SELECT * FROM connections 
+        WHERE (from_user_id=$1 AND to_user_id=$2) OR (from_user_id=$2 AND to_user_id=$1) AND (accepted=true);
+        `,[userId, friendId]);
+        await client.query(`UPDATE chills_users SET requested_user_id=$1, connection_id=$2 WHERE id=$3;
+        `, [id, connectionId, chillId]);
+        await client.query(`DELETE FROM requests where id=$1`, [requestId]);
+        await client.query(`COMMIT;`);
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.log('Error PUT /request/accept', error);
+        return res.status(500).send(error);
+    } finally {
+        client.release();
+        return res.sendStatus(200)
+    }
+});
+
+// to decline a chill request
+router.delete('/request/decline', rejectUnauthenticated, (req, res) => {
+    console.log(`in chills.router.js DELETE for '/chills/request/decline' req.params:`,req.params);
+    let requestId=req.params.id;
+    pool.query(`
+    DELETE FROM requests WHERE id=$1;
+    `, [requestId])
+        .then((result) => {
+            console.log(result);
+            res.sendStatus(200);
+        }).catch((error) => {
+            console.log('Error DELETE /chills', error);
+            res.sendStatus(500);  
+    });
+});
+
+// to cancel a chill that a user didn't create
+router.put('/cancel', rejectUnauthenticated, (req, res) => {
+    console.log(`in chills.router.js PUT for '/chills/cancel' req.body:`,req.body);
+    let chillsUsersId = req.body.chillsUsersId;
+
+    pool.query(`
+    UPDATE chills_users SET requested_user_id=NULL, connection_id=NULL WHERE id=$1;
+    `,[chillsUsersId])
+        .then((result) => {
+            console.log(result);
+            res.sendStatus(200);
+        }).catch((error) => {
+            console.log('Error PUT /chills/cancel', error);
+            res.sendStatus(500);  
+    });
 });
 
 module.exports = router;
