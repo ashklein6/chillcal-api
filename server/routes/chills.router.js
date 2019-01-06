@@ -198,14 +198,14 @@ router.post('/', rejectUnauthenticated, async (req, res) => {
 router.put('/edit', rejectUnauthenticated, (req, res) => {
     console.log(`in chills.router.js PUT for '/chills/edit' req.body:`,req.body);
     let newChill = req.body.newChill;
-    let chillId = req.body.id;
+    let chillId = req.body.chillId;
     console.log('newChill:', newChill, 'chillId:', chillId);
 
     pool.query(`
     UPDATE chills 
     SET start_time=$1, end_time=$2, details=$3
     WHERE id=$4;
-    `,[newChill.startTime, newChill.endTime, newChill.details, chillId])
+    `,[newChill.start_time, newChill.end_time, newChill.details, chillId])
         .then((result) => {
             console.log(result);
             res.sendStatus(200);
