@@ -146,6 +146,25 @@ router.get('/upcoming/:id', rejectUnauthenticated, (req, res) => {
     });
 });
 
+// get user's created chills
+router.get('/created/:id', rejectUnauthenticated, (req, res) => {
+    console.log(`in chills.router.js GET for '/chills/created' req.params:`,req.params);
+    let id=req.params.id;
+    pool.query(`
+    SELECT chills_users.id AS chills_users_id, chill_id, created_user_id, requested_user_id, connection_id, start_time, end_time, details, person.username AS friend_username FROM chills_users
+    JOIN chills ON chills.id = chills_users.chill_id
+    LEFT JOIN person ON person.id = chills_users.requested_user_id
+    WHERE (created_user_id=$1)
+    ORDER BY start_time ASC;
+    `,[id])
+        .then((result) => {
+            res.send(result.rows);
+        }).catch((error) => {
+            console.log('Error GET /chills/created', error);
+            res.sendStatus(500);  
+    });
+});
+
 // to create a new chill
 router.post('/', rejectUnauthenticated, async (req, res) => {
     console.log(`in chills.router.js POST for '/chills' req.body:`,req.body);
@@ -157,11 +176,13 @@ router.post('/', rejectUnauthenticated, async (req, res) => {
 
     try {
         await client.query(`BEGIN;`);
-        let chillId = await client.query(`INSERT into chills (start_time, end_time, details)
-        VALUES ($1, $2, $3)
-        RETURNING id;`,[newChill.start_time, newChill.end_time, newChill.details]);
-        await client.query(`INSERT into chills_users (created_user_id, chill_id)
-        VALUES ($1, $2);`,[id, chillId]);
+        let result = await client.query(`INSERT into chills (start_time, end_time, details, created_user_id)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id;`,[newChill.start_time, newChill.end_time, newChill.details, id]);
+        console.log('result:', result.rows[0].id);
+        let chillId = result.rows[0].id;
+        await client.query(`INSERT into chills_users (chill_id)
+        VALUES ($1);`,[chillId]);
         await client.query(`COMMIT;`);
     } catch (error) {
         await client.query('ROLLBACK');

@@ -236,3 +236,10 @@ JOIN chills ON chills_users.chill_id=chills.id
 WHERE chills_users.requested_user_id IS NOT NULL
 ORDER BY start_time ASC
 LIMIT 3;
+
+-- Get a user's created chills (in this case from 'Ashley'/id=1)
+SELECT chills_users.id AS chills_users_id, chill_id, created_user_id, requested_user_id, connection_id, start_time, end_time, details, person.username AS friend_username FROM chills_users
+JOIN chills ON chills.id = chills_users.chill_id
+LEFT JOIN person ON person.id = chills_users.requested_user_id
+WHERE (created_user_id=1)
+ORDER BY start_time ASC;
