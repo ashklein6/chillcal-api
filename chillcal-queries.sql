@@ -75,11 +75,11 @@ VALUES (5,3),
 (6,6);
 
 -- Drop tables if necessary.
-DROP TABLE "person";
-DROP TABLE "connections";
-DROP TABLE "chills";
-DROP TABLE "chills_users";
 DROP TABLE "requests";
+DROP TABLE "chills_users";
+DROP TABLE "chills";
+DROP TABLE "connections";
+DROP TABLE "person";
 
 --------------------------------------------------------------------
 --                      CHILLCAL SQL QUERIES                      --
@@ -111,15 +111,15 @@ SELECT id, username FROM person WHERE (username ILIKE 'A%') AND (id != 1);
 
 -- Get a user's scheduled chills (in this case from 'Ashley'/id=1)
 SELECT connections.username AS friend_username, connections.id AS friend_id, chills_users.id AS chills_users_id, created_user_id, requested_user_id, chill_id, chills_users.connection_id, start_time, end_time, details FROM (
-    SELECT connections.id as connection_id, to_user.username, to_user.id FROM connections 
-    LEFT JOIN person AS from_user ON from_user.id=from_user_id
-    LEFT JOIN person AS to_user ON to_user.id=to_user_id
-    WHERE (from_user.id=1) AND (accepted = true)
-    UNION ALL
-    SELECT connections.id as connection_id, from_user.username, from_user.id FROM connections 
-    LEFT JOIN person AS from_user ON from_user.id=from_user_id
-    LEFT JOIN person AS to_user ON to_user.id=to_user_id
-    WHERE (to_user_id=1) AND (accepted = true)
+    SELECT connections.id AS connection_id, to_user.username, to_user.id FROM connections
+    LEFT JOIN person AS from_user ON from_user.id=from_user_id
+    LEFT JOIN person AS to_user ON to_user.id=to_user_id
+    WHERE (from_user.id=1) AND (accepted = true)
+    UNION ALL
+    SELECT connections.id AS connection_id, from_user.username, from_user.id FROM connections
+    LEFT JOIN person AS from_user ON from_user.id=from_user_id
+    LEFT JOIN person AS to_user ON to_user.id=to_user_id
+    WHERE (to_user_id=1) AND (accepted = true)
 ) AS connections
 JOIN chills_users ON chills_users.connection_id=connections.connection_id
 JOIN chills ON chills_users.chill_id=chills.id
@@ -139,19 +139,20 @@ WHERE connection_id=1
 ORDER BY chills.start_time;
 
 -- Get a user's available chills (in this case for 'Ashley'/id=1)
-SELECT * FROM (
-    SELECT connections.id as connection_id, to_user.username, to_user.id FROM connections 
-    LEFT JOIN person AS from_user ON from_user.id=from_user_id
-    LEFT JOIN person AS to_user ON to_user.id=to_user_id
-    WHERE (from_user.id=1) AND (accepted = true)
-    UNION ALL
-    SELECT connections.id as connection_id, from_user.username, from_user.id FROM connections 
-    LEFT JOIN person AS from_user ON from_user.id=from_user_id
-    LEFT JOIN person AS to_user ON to_user.id=to_user_id
-    WHERE (to_user_id=1) AND (accepted = true)
+SELECT friends.username AS friend_username, friends.id AS friend_id, chills_users.id AS chills_users_id, created_user_id, requested_user_id, chill_id, chills_users.connection_id, start_time, end_time, details, requests.requester_id AS request_from_id FROM (
+    SELECT connections.id AS connection_id, to_user.username, to_user.id FROM connections
+    LEFT JOIN person AS from_user ON from_user.id=from_user_id
+    LEFT JOIN person AS to_user ON to_user.id=to_user_id
+    WHERE (from_user.id=1) AND (accepted = true)
+    UNION ALL
+    SELECT connections.id AS connection_id, from_user.username, from_user.id FROM connections
+    LEFT JOIN person AS from_user ON from_user.id=from_user_id
+    LEFT JOIN person AS to_user ON to_user.id=to_user_id
+    WHERE (to_user_id=1) AND (accepted = true)
 ) AS friends 
 JOIN chills ON chills.created_user_id = friends.id
 JOIN chills_users ON chills_users.chill_id = chills.id
+LEFT JOIN requests ON requests.chills_users_id = chills_users.id
 WHERE requested_user_id IS NULL
 ORDER BY username ASC;
 

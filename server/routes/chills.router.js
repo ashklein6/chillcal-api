@@ -9,15 +9,15 @@ router.get('/scheduled/:id', rejectUnauthenticated, (req, res) => {
     let id=req.params.id;
     pool.query(`
     SELECT connections.username AS friend_username, connections.id AS friend_id, chills_users.id AS chills_users_id, created_user_id, requested_user_id, chill_id, chills_users.connection_id, start_time, end_time, details FROM (
-        SELECT connections.id as connection_id, to_user.username, to_user.id FROM connections 
-        LEFT JOIN person AS from_user ON from_user.id=from_user_id
-        LEFT JOIN person AS to_user ON to_user.id=to_user_id
-        WHERE (from_user.id=$1) AND (accepted = true)
-        UNION ALL
-        SELECT connections.id as connection_id, from_user.username, from_user.id FROM connections 
-        LEFT JOIN person AS from_user ON from_user.id=from_user_id
-        LEFT JOIN person AS to_user ON to_user.id=to_user_id
-        WHERE (to_user_id=$1) AND (accepted = true)
+        SELECT connections.id AS connection_id, to_user.username, to_user.id FROM connections
+        LEFT JOIN person AS from_user ON from_user.id=from_user_id
+        LEFT JOIN person AS to_user ON to_user.id=to_user_id
+        WHERE (from_user.id=$1) AND (accepted = true)
+        UNION ALL
+        SELECT connections.id AS connection_id, from_user.username, from_user.id FROM connections
+        LEFT JOIN person AS from_user ON from_user.id=from_user_id
+        LEFT JOIN person AS to_user ON to_user.id=to_user_id
+        WHERE (to_user_id=$1) AND (accepted = true)
     ) AS connections
     JOIN chills_users ON chills_users.connection_id=connections.connection_id
     JOIN chills ON chills_users.chill_id=chills.id
@@ -37,24 +37,31 @@ router.get('/available/:id', rejectUnauthenticated, (req, res) => {
     console.log(`in chills.router.js GET for '/chills/available' req.params:`,req.params);
     let id=req.params.id;
     pool.query(`
-    SELECT * FROM (
-        SELECT connections.id as connection_id, to_user.username, to_user.id FROM connections 
-        LEFT JOIN person AS from_user ON from_user.id=from_user_id
-        LEFT JOIN person AS to_user ON to_user.id=to_user_id
-        WHERE (from_user.id=$1) AND (accepted = true)
-        UNION ALL
-        SELECT connections.id as connection_id, from_user.username, from_user.id FROM connections 
-        LEFT JOIN person AS from_user ON from_user.id=from_user_id
-        LEFT JOIN person AS to_user ON to_user.id=to_user_id
-        WHERE (to_user_id=$1) AND (accepted = true)
+    SELECT friends.username AS friend_username, friends.id AS friend_id, chills_users.id AS chills_users_id, created_user_id, requested_user_id, chill_id, chills_users.connection_id, start_time, end_time, details, requests.requester_id AS request_from_id, requests.id AS request_id FROM (
+        SELECT connections.id AS connection_id, to_user.username, to_user.id FROM connections
+        LEFT JOIN person AS from_user ON from_user.id=from_user_id
+        LEFT JOIN person AS to_user ON to_user.id=to_user_id
+        WHERE (from_user.id=$1) AND (accepted = true)
+        UNION ALL
+        SELECT connections.id AS connection_id, from_user.username, from_user.id FROM connections
+        LEFT JOIN person AS from_user ON from_user.id=from_user_id
+        LEFT JOIN person AS to_user ON to_user.id=to_user_id
+        WHERE (to_user_id=$1) AND (accepted = true)
     ) AS friends 
     JOIN chills ON chills.created_user_id = friends.id
     JOIN chills_users ON chills_users.chill_id = chills.id
+    LEFT JOIN requests ON requests.chills_users_id = chills_users.id
     WHERE requested_user_id IS NULL
     ORDER BY username ASC;
     `,[id])
         .then((result) => {
-            res.send(result.rows);
+            let resultRows = result.rows;
+            for (let i=0; i<resultRows.length; i++) {
+                if (resultRows[i].request_from_id != id && resultRows[i].request_from_id != null) {
+                    resultRows[i] = { ...resultRows[i], request_from_id: null}
+                }
+            }
+            res.send(resultRows);
         }).catch((error) => {
             console.log('Error GET /chills/available', error);
             res.sendStatus(500);  
@@ -235,7 +242,7 @@ router.delete('/:id', rejectUnauthenticated, (req, res) => {
 router.post('/request', rejectUnauthenticated, (req, res) => {
     console.log(`in chills.router.js POST for '/chills/request' req.body:`,req.body);
     let chillsUsersId = req.body.chillsUsersId;
-    let userId = req.body.user;
+    let userId = req.body.id;
     console.log('chillsUsersId:', chillsUsersId, 'userId:', userId);
     pool.query(`
     INSERT into requests (chills_users_id, requester_id)
@@ -253,7 +260,7 @@ router.post('/request', rejectUnauthenticated, (req, res) => {
 // to accept a chill request
 router.put('/request/accept', rejectUnauthenticated, async (req, res) => {
     console.log(`in chills.router.js PUT for '/chills/request/accept' req.body:`,req.body);
-    let userId = req.body.userId;
+    let userId = req.body.id;
     let friendId = req.body.friendId;
     let chillId = req.body.chillId;
     let requestId = req.body.requestId;
@@ -280,8 +287,8 @@ router.put('/request/accept', rejectUnauthenticated, async (req, res) => {
     }
 });
 
-// to decline a chill request
-router.delete('/request/decline', rejectUnauthenticated, (req, res) => {
+// to decline a chill request or cancel a chill request
+router.delete('/request/decline/:id', rejectUnauthenticated, (req, res) => {
     console.log(`in chills.router.js DELETE for '/chills/request/decline' req.params:`,req.params);
     let requestId=req.params.id;
     pool.query(`
