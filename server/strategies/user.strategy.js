@@ -33,6 +33,7 @@ passport.use('local', new LocalStrategy({
 }, ((req, username, password, done) => {
     pool.query('SELECT * FROM person WHERE username = $1', [username])
       .then((result) => {
+        console.log('result', result);
         const user = result && result.rows && result.rows[0];
         if (user && encryptLib.comparePassword(password, user.password)) {
           // all good! Passwords match!
@@ -42,7 +43,7 @@ passport.use('local', new LocalStrategy({
           done(null, false, { message: 'Incorrect credentials.' });
         } else {
           // not good! No user with that name
-          done(null, false);
+          done(null, false, { message: 'That username has not been registered.'});
         }
       }).catch((err) => {
         console.log('error', err);

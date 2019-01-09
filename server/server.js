@@ -24,6 +24,8 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
+console.log('in server')
+
 /* Routes */
 app.use('/api/user', userRouter);
 app.use('/api/friends', friendsRouter);
