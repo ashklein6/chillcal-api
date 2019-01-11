@@ -69,8 +69,8 @@ router.get('/search', rejectUnauthenticated, (req, res) => {
 // to send a friend request/add a new connection
 router.post('/', rejectUnauthenticated, (req, res) => {
     console.log(`in friends.router.js POST for '/friends' req.body:`,req.body);
-    let friendId = req.body.friend;
-    let userId = req.body.user;
+    let friendId = req.body.friendId;
+    let userId = req.body.id;
     console.log('userId:', userId, 'friendId:', friendId);
     pool.query(`
     INSERT into connections (from_user_id, to_user_id, accepted)
@@ -102,7 +102,7 @@ router.put('/accept/:id', rejectUnauthenticated, (req, res) => {
 });
 
 // to delete a friend (by connection id) or decline a pending request
-router.delete('/:id', rejectUnauthenticated, (req, res) => {
+router.delete('/decline/:id', rejectUnauthenticated, (req, res) => {
     console.log(`in friends.router.js DELETE for '/friends' req.params:`,req.params);
     let connectionId=req.params.id;
     pool.query(`
