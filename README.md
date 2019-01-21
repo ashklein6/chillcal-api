@@ -1,6 +1,6 @@
 # ChillCal-API
 
-This repository is the server for the ChillCal React-Native Application:
+This repository is the server for the [ChillCal React-Native Application](https://github.com/ashklein6/chillcal):
 
 ChillCal is an anti-calendar application that focuses on free time rather than busy time. A connection-based app, users enter in times where they are available and their friends may request to “chill” during those times. Complete with a wintry, penguin theme, ChillCal will be a clean, easy-to-follow web-based mobile application.
 
@@ -44,7 +44,7 @@ Before you get started, make sure you have the following software installed on y
 
 To get a copy of chillcal running on your local machine:
 
-1. Follow steps of chillcal project to set up client.
+1. Follow steps of [chillcal project](https://github.com/ashklein6/chillcal) to set up client.
 1. Download this project.
 1. Start postgres if not running already by using `brew services start postgresql`.
 1. Create a new database called `chillcal` and create tables using the `chillcal-queries.sql` file. Specifically, run the statements in the `Create Tables` section. If you would like to name your database something else, you will need to change `chillcal` to the name of your new database name in `server/modules/pool.js`. If desired, run the statements in the `Dummy Data` section to fill the database with sample data.
